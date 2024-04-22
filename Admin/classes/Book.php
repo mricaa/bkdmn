@@ -1,121 +1,109 @@
-<?php 
-    include $_SERVER['DOCUMENT_ROOT'] . '/ADMIN/utility/DBConnection.php';
+<?php
+include $_SERVER['DOCUMENT_ROOT'] . '/ADMIN/utility/DBConnection.php';
 
-    class Book{
-        public $conn;
+class Book {
+    public $conn;
 
-        public function __construct(){
-            $db = new DBConnection();
-            $this->conn = $db->conn;
-        }
+    public function __construct() {
+        $db = new DBConnection();
+        $this->conn = $db->conn;
+    }
 
-        public function saveBook($post){
-            $bookCategory = $post['bookCategory'];
-            $Title = $post['Title'];
-            $Author = $post['Author'];
-            $columnNumber = $post['columnNumber'];
-            $Accession = $post['Accession'];
-            $bookEdition = $post['bookEdition'];
-            $bookYear = $post['bookYear'];
-            $Property = $post['Property'];
-            $isbn = $post['isbn'];
+    // Method to save a book (add or update)
+    public function saveBook($post) {
+        // Check if bookId is provided for an update operation
+        $bookId = isset($post['bookId']) ? $post['bookId'] : '';
 
+        // Extract book details from POST data
+        $bookCategory = $post['bookCategory'];
+        $Title = $post['Title'];
+        $Author = $post['Author'];
+        $columnNumber = $post['columnNumber'];
+        $Accession = $post['Accession'];
+        $bookEdition = $post['bookEdition'];
+        $bookYear = $post['bookYear'];
+        $Property = $post['Property'];
+        $isbn = $post['isbn'];
+
+        // Determine if updating an existing record or adding a new one
+        if (!empty($bookId)) {
+            // Update existing book record
+            $sql = "UPDATE book SET bookCategory='$bookCategory', Title='$Title', Author='$Author', columnNumber='$columnNumber', Accession='$Accession', bookEdition='$bookEdition', bookYear='$bookYear', Property='$Property', ISBN='$isbn' WHERE bookId=$bookId";
+            $result = $this->conn->query($sql);
+            // Determine if the update was successful
+            if ($result) {
+                return json_encode(array('type' => 'success', 'message' => 'Book successfully updated.'));
+            } else {
+                return json_encode(array('type' => 'fail', 'message' => 'Unable to update book details.'));
+            }
+        } else {
+            // Insert new book record
             $sql = "INSERT INTO book (bookCategory, Title, Author, columnNumber, Accession, bookEdition, bookYear, Property, ISBN) VALUES ('$bookCategory', '$Title', '$Author', '$columnNumber', '$Accession', '$bookEdition', '$bookYear', '$Property', '$isbn')";
             $result = $this->conn->query($sql);
-
-            if($result){
-                return json_encode(array('type' => 'success', 'message' => 'Book detail saved Successfully.'));
-            }else{
-                return json_encode(array('type' => 'fail', 'message' => 'Unable to save book details.'));
+            // Determine if the insertion was successful
+            if ($result) {
+                return json_encode(array('type' => 'success', 'message' => 'Book successfully added.'));
+            } else {
+                return json_encode(array('type' => 'fail', 'message' => 'Unable to add book details.'));
             }
         }
+    }
 
-        public function getAllBooks(){
-            $sql = "SELECT * FROM book";
-            $result = $this->conn->query($sql);
-            $book = array();
-            if($result->num_rows > 0){
-                while($rows = $result->fetch_assoc()){
-                    $book[] = $rows;
-                }
-                return $book;
+    // Method to retrieve all books
+    public function getAllBooks() {
+        $sql = "SELECT * FROM book";
+        $result = $this->conn->query($sql);
+        $books = array();
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $books[] = $row;
             }
         }
+        return $books;
+    }
 
-        public function editBook($editId){
-            $sql = "SELECT * FROM book WHERE bookId = $editId";
-            $result = $this->conn->query($sql);
+    // Method to delete a book
+    public function deleteBook($deleteId) {
+        $sql = "DELETE FROM book WHERE bookId = $deleteId";
+        $result = $this->conn->query($sql);
 
-            if($result->num_rows > 0){
-                while($row = $result->fetch_assoc()){
-                    $data['bookId'] = $row['bookId'];
-                    $data['Title'] = $row['Title'];
-                    $data['Author'] = $row['Author'];
-                    $data['columnNumber'] = $row['columnNumber'];
-                    $data['Accession'] = $row['Accession'];
-                    $data['bookEdition'] = $row['bookEdition'];
-                    $data['bookYear'] = $row['bookYear'];
-                    $data['Property'] = $row['Property'];
-                    $data['isbn'] = $row['isbn'];
-                }
-                return json_encode($data);
-            }
+        if ($result) {
+            return json_encode(array('type' => 'success', 'message' => 'Book deleted successfully.'));
+        } else {
+            return json_encode(array('type' => 'fail', 'message' => 'Unable to delete book.'));
         }
+    }
 
-        public function updateBook($post){
-            $bookId = $post['bookId'];
-            $Title = $post['Title'];
-            $Author = $post['Author'];
-            $columnNumber = $post['columnNumber'];
-            $Accession = $post['Accession'];
-            $bookEdition = $post['bookEdition'];
-            $bookYear = $post['bookYear'];
-            $Property = $post['Property'];
-            $isbn = $post['isbn'];
-
-            $sql = "UPDATE book SET Title = '$Title', Author = '$Author', columnNumber = '$columnNumber', Accession = '$Accession', bookEdition = '$bookEdition', bookYear = '$bookYear', Property = '$Property', isbn = '$isbn' WHERE bookId = $bookId";
-            $result = $this->conn->query($sql);
-
-            if($result){
-                return json_encode(array('type' => 'success', 'message' => 'Book details Updated'));
-            }else{
-                return json_encode(array('type' => 'fail', 'message' => 'Unable update book details '));
-            }
+    // Method to get book details by ID
+    public function getBookById($bookId) {
+        $sql = "SELECT * FROM book WHERE bookId = $bookId";
+        $result = $this->conn->query($sql);
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        } else {
+            return null;
         }
-
-        public function deleteBook($deleteId){
-            $sql = "DELETE FROM book WHERE bookId = $deleteId";
-            $execute = $this->conn->query($sql);
-
-            if($execute){
-                return json_encode(array('type' => 'success', 'message' => 'Book details deleted'));
-            }else{
-                return json_encode(array('type' => 'fail', 'message' => 'Unable delete book details '));
-            }
-        }
-        
     }
+}
 
+$book = new Book();
 
-    $book = new Book();
+// Save book details
+if (isset($_POST['Title'])) {
+    $saveBook = $book->saveBook($_POST);
+    echo $saveBook;
+}
 
-    if(isset($_POST['Title'])){
-        $saveBook = $book->saveBook($_POST);
-        echo $saveBook;
-    }
+// Delete book
+if (isset($_POST['deleteId'])) {
+    $deleteBook = $book->deleteBook($_POST['deleteId']);
+    echo $deleteBook;
+}
 
-    if(isset($_POST['editId'])){
-        $editBook = $book->editBook($_POST['editId']);
-        echo $editBook;
-    }
-
-    if(isset($_POST['updateBtn'])){
-        $updateBook = $book->updateBook($_POST);
-        echo $updateBook;
-    }
-
-    if(isset($_POST['deleteId'])){
-        $deleteBook = $book->deleteBook($_POST['deleteId']);
-        echo $deleteBook;
-    }
-?> 
+// Fetch book details by ID
+if (isset($_POST['getBookById'])) {
+    $bookId = $_POST['getBookById'];
+    $bookDetails = $book->getBookById($bookId);
+    echo json_encode($bookDetails);
+}
+?>
