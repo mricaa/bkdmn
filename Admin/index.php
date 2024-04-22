@@ -92,6 +92,9 @@
         </table>        
     </div>               
 
+    <!-- Add an alert div -->
+<div class="alert alert-dark" id="alert" role="alert" style="display: none;"></div>
+
     <!-- Modal for adding new book -->
 <div class="modal fade" id="addBook" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -169,6 +172,84 @@
   </div>
 </div>
 
+<input type="hidden" id="editBookId">
+<!-- Add an edit modal -->
+<div class="modal fade" id="editBookModal" tabindex="-1" role="dialog" aria-labelledby="editBookModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editBookModalLabel">Edit Book Details</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editBookForm">
+          <input type="hidden" id="editBookId">
+          <div class="mb-3">
+            <label for="bookCategoryEdit" class="form-label">Book Category</label>
+            <select class="form-select" id="bookCategoryEdit" name="bookCategory">
+              <option value="Literature">Literature</option>
+              <option value="Education">Education</option>
+              <option value="Novel">Novel</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Technology">Technology</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Laws">Laws</option>
+              <option value="Architecture">Architecture</option>
+              <option value="Fiction">Fiction</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="TitleEdit" class="form-label">Title</label>
+            <input type="text" class="form-control" id="TitleEdit" name="Title" required>
+          </div>
+          <div class="mb-3">
+            <label for="AuthorEdit" class="form-label">Author</label>
+            <input type="text" class="form-control" id="AuthorEdit" name="Author" required>
+          </div>
+          <div class="mb-3">
+            <label for="columnNumberEdit" class="form-label">Column Number</label>
+            <input type="text" class="form-control" id="columnNumberEdit" name="columnNumber" required>
+          </div>
+          <div class="mb-3">
+            <label for="AccessionEdit" class="form-label">Accession</label>
+            <input type="text" class="form-control" id="AccessionEdit" name="Accession" required>
+          </div>
+          <div class="mb-3">
+            <label for="bookEditionEdit" class="form-label">Edition</label>
+            <input type="text" class="form-control" id="bookEditionEdit" name="bookEdition" required>
+          </div>
+          <div class="mb-3">
+            <label for="bookYearEdit" class="form-label">Year</label>
+            <input type="text" class="form-control" id="bookYearEdit" name="bookYear" required>
+          </div>
+          <div class="mb-3">
+            <label for="PropertyEdit" class="form-label">Property</label>
+            <input type="text" class="form-control" id="PropertyEdit" name="Property" required>
+          </div>
+          <div class="mb-3">
+            <label for="isbnEdit" class="form-label">ISBN/ISN</label>
+            <input type="text" class="form-control" id="isbnEdit" name="isbn" required>
+          </div>
+          <div class="input-group mb-3">
+                <label class="input-group-text" for="inputGroupFile01">Image Front Cover</label>
+                <input type="file" class="form-control" id="inputGroupFile01" name="image1" accept= "jpg, png, svg" required>
+            </div>
+            <div class="input-group mb-3">
+                <label class="input-group-text" for="inputGroupFile02">Image Book Stem</label>
+                <input type="file" class="form-control" id="inputGroupFile02" name="image2" accept= "jpg, png, svg" required>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveEditBookBtn">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="text/javascript">
     $(document).ready(function(){ 
         $('#addBookBtn').on('click', function(){
@@ -184,6 +265,59 @@
                 }
             });
         });
+
+        $(document).ready(function(){ 
+        // Edit button click event
+        $('.editButton').on('click', function() {
+            var bookId = $(this).attr('id'); // Get the book ID
+            $('#editBookId').val(bookId); // Set the book ID in the hidden input field
+            
+            // Fetch book details by ID
+            $.post('classes/Book.php', {getBookById: bookId}, function(data) {
+                var bookData = JSON.parse(data);
+                // Populate edit modal fields with fetched data
+                $('#bookCategoryEdit').val(bookData.bookCategory);
+                $('#TitleEdit').val(bookData.Title);
+                $('#AuthorEdit').val(bookData.Author);
+                $('#columnNumberEdit').val(bookData.columnNumber);
+                $('#AccessionEdit').val(bookData.Accession);
+                $('#bookEditionEdit').val(bookData.bookEdition);
+                $('#bookYearEdit').val(bookData.bookYear);
+                $('#PropertyEdit').val(bookData.Property);
+                $('#isbnEdit').val(bookData.isbn);
+                
+                $('#editBookModal').modal('show'); // Show the edit modal
+            });
+        });
+
+        // Save changes in the edit modal
+        $('#saveEditBookBtn').on('click', function() {
+            // Collect data from edit modal fields
+            var editedData = {
+                bookId: $('#editBookId').val(),
+                bookCategory: $('#bookCategoryEdit').val(),
+                Title: $('#TitleEdit').val(),
+                Author: $('#AuthorEdit').val(),
+                columnNumber: $('#columnNumberEdit').val(),
+                Accession: $('#AccessionEdit').val(),
+                bookEdition: $('#bookEditionEdit').val(),
+                bookYear: $('#bookYearEdit').val(),
+                Property: $('#PropertyEdit').val(),
+                isbn: $('#isbnEdit').val()
+            };
+            
+            // Update book data in the database
+            $.post('classes/Book.php', editedData, function(response) {
+                var data = JSON.parse(response);
+                if (data.type == 'success') {
+                    $('#editBookModal').modal('hide');
+                    // Show success message or reload page
+                } else {
+                    // Show error message
+                }
+            });
+        });
+    });
 
         $(document).ready(function() {
     // Add event listener to search input field
@@ -210,44 +344,43 @@
     });
 });
 
-    //edit books  
-    $('.editButton').on('click', function(e) {
-                $('#editBook').modal('show'); 
-                $.post('classes/Book.php', {editId: e.target.id}, function(data) {
-                    var data = JSON.parse(data);
-                    $('#editTitle').val(data.Title);
-                    $('#Author').val(data.Author);
-                    $('#columnNumber').val(data.columnNumber);
-                    $('#Accession').val(data.Accession);
-                    $('#bookEdition').val(data.bookEdition);
-                    $('#bookYear').val(data.bookYear);
-                    $('#Property').val(data.Property);
-                    $('#isbn').val(data.isbn);
-                    $('#bookId').val(data.bookId);
-                });
-            });
-            
-            // Updating Books
-            $('#updateBook').on('click', function() {
-                $.post('classes/Book.php', $('form#editBookForm').serialize(), function(data) {
-                    var data = JSON.parse(data);
-                    if (data.type == 'success') {
-                        $('#editBook').modal('hide');
-                        $('#alert').modal('show');
-                        $('#alert .alert').addClass('alert-success').append(data.message).delay(1500).fadeOut('slow', function() {
-                            $.get('classes/Book.php', function(data) {
-                                $('tbody').html(data); 
-                            });
-                        });
-                    } else {
-                        $('#editBook').modal('hide');
-                        $('#alert').modal('show');
-                        $('#alert .alert').addClass('alert-danger').append(data.message).delay(1500).fadeOut('slow', function() {
-                            location.reload();
-                    });
+$(document).ready(function(){ 
+        // Function to display alert
+        function showAlert(message) {
+            $('#alert').removeClass().addClass('alert alert-dark').text(message).show();
+            setTimeout(function(){ $('#alert').fadeOut('slow'); }, 3000);
+        }
+
+        // Add book button click event
+        $('#addBookBtn').on('click', function(){
+            $.post('classes/Book.php', $('form#addBookForm').serialize(), function(data){
+                var data = JSON.parse(data);
+                
+                if(data.type == 'success'){
+                    $('#addBook').modal('hide');
+                    showAlert('Book successfully added');
+                    location.reload();
+                } else {
+                    showAlert('Failed to add book');
                 }
             });
         });
+
+        // Save edit book button click event
+        $('#saveEditBookBtn').on('click', function(){
+            $.post('classes/Book.php', $('form#editBookForm').serialize(), function(data){
+                var data = JSON.parse(data);
+                
+                if(data.type == 'success'){
+                    $('#editBookModal').modal('hide');
+                    showAlert('Book successfully updated');
+                    location.reload();
+                } else {
+                    showAlert('Failed to update book');
+                }
+            });
+        });
+    });
 
         //Deleting Books
         $('.deleteButton').on('click', function(e) {
